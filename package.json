@@ -1,0 +1,29 @@
+{
+  "name": "hapi-ip-whitelist",
+  "version": "0.0.0",
+  "description": "Auth scheme for Hapi.js implementing ip whitelisting",
+  "repository": "https://github.com/FlorenceHC/fhc/tree/master/packages/fhc-ip-whitelist",
+  "main": "lib/plugin.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "boom": "^7.3.0"
+  },
+  "peerDependencies": {
+    "hapi":"16.x"
+  },
+  "keywords": [
+    "ip",
+    "ip-whitelist",
+    "auth",
+    "scheme",
+    "hapi",
+    "plugin"
+  ],
+  "author": "FlorenceHC",
+  "license": ""
+}

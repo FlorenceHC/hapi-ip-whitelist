@@ -101,7 +101,7 @@ describe('Hapi-ip-whitelist strategy instantiation', () => {
             server.auth.strategy('test-ip-whitelist1', 'ip-whitelist', {
                 networkAddress: '132.32.2.2',
                 subnetMask: 16,
-                validateFunction: 'string, not a function'
+                validationFunction: 'string, not a function'
             });
         } catch (err) {
             error = err

@@ -8,13 +8,19 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+    "test": "lab --globals code",
+    "test-debug": "node --inspect-brk=0.0.0.0:9000 ./node_modules/.bin/lab -m 60000"
+},
   "dependencies": {
     "boom": "^7.3.0"
   },
+  "devDependencies": {
+    "code": "^5.2.4",
+    "hapi": "^16.7.0",
+    "lab": "^18.0.0"
+  },
   "peerDependencies": {
-    "hapi":"16.x"
+    "hapi": "16.x"
   },
   "keywords": [
     "ip",

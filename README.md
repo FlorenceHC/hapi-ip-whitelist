@@ -10,7 +10,7 @@ User of this package must define some other strategy and append it next to this 
     const hapiIpWhitelist = require('hapi-ip-whitelist');
     const server = new Hapi.server();
 
-    server.register(hapiIpWhitelist, err => err || console.log(err));
+    server.register(hapiIpWhitelist, err => err && console.log(err));
 ```
 ## Defining strategy
 Options parameter (Hapi options used when defining strategy) for this strategy contains next properties:

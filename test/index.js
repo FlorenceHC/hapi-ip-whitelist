@@ -71,7 +71,7 @@ describe('Hapi-ip-whitelist strategy instantiation', () => {
         }
         expect(error).to.exist();
     });
-    it('fails because of invalid networkAddress', async () => {
+    it('fails because of invalid type for networkAddress', async () => {
         let error;
         try {
             server.auth.strategy('test-ip-whitelist1', 'ip-whitelist', {
@@ -150,7 +150,7 @@ describe('Hapi-ip-whitelist filter logic', () => {
         addRoutes(server, [3], false)
     });
 
-    describe('Testing vpc-ip-whitelist auth strategy before some other strategy that authorizes user', () => {
+    describe('Request is processed by test-ip-whitelist strategy followed by second strategy with that authorizes user', () => {
 
         describe('Testing /test1 route', () => {
 
@@ -162,23 +162,23 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 };
             });
 
-            describe('authorizes a user', () => {
+            describe('User ip address has valid network part', () => {
 
-                it('user ip address has valid network part #1', async () => {
+                it('authorizes user', async () => {
 
                     stubbedClientAddress = '172.24.4.4';
                     const res = await serverInjectAsync(requestOpts);
                     expect(res.statusCode).to.equal(200);
                     expect(res.result.success).equals(true);
                 });
-                it('user ip address has valid network part #2', async () => {
+                it('authorizes user', async () => {
 
                     stubbedClientAddress = '172.24.0.0';
                     const res = await serverInjectAsync(requestOpts);
                     expect(res.statusCode).to.equal(200);
                     expect(res.result.success).equals(true);
                 });
-                it('user ip address has valid network part #3', async () => {
+                it('authorizes user', async () => {
 
                     stubbedClientAddress = '172.24.255.255';
                     const res = await serverInjectAsync(requestOpts);
@@ -186,30 +186,32 @@ describe('Hapi-ip-whitelist filter logic', () => {
                     expect(res.result.success).equals(true);
                 });
             });
-            describe('rejects user', () => {
+            describe('User ip address does not belong in required network range', () => {
 
-                it('user ip address does not belong in required network range #1', async () => {
+                it('rejects user', async () => {
 
                     stubbedClientAddress = '172.18.4.4';
                     const res = await serverInjectAsync(requestOpts);
                     expect(res.statusCode).to.equal(401);
                     expect(res.result.message).equals('Forbidden access');
                 });
-                it('user ip address does not belong in required network range #2', async () => {
+                it('rejects user', async () => {
 
                     stubbedClientAddress = '192.0.1.4';
                     const res = await serverInjectAsync(requestOpts);
                     expect(res.statusCode).to.equal(401);
                     expect(res.result.message).equals('Forbidden access');
                 });
-                it('user ip address does not belong in required network range #3', async () => {
+                it('rejects user', async () => {
 
                     stubbedClientAddress = '172.35.4.4';
                     const res = await serverInjectAsync(requestOpts);
                     expect(res.statusCode).to.equal(401);
                     expect(res.result.message).equals('Forbidden access');
                 });
-                it('user has invalid ip address', async () => {
+            });
+            describe('User has invalid ip address', () => {
+                it('rejects user', async () => {
 
                     stubbedClientAddress = '30.3.0.300';
                     const res = await serverInjectAsync(requestOpts);
@@ -217,56 +219,56 @@ describe('Hapi-ip-whitelist filter logic', () => {
                     expect(res.result.message).equals('Forbidden access');
                 });
             });
-            describe('Testing /test2 route', () => {
+        });
+        describe('Testing /test2 route', () => {
 
-                before(async () => {
-    
-                    requestOpts = {
-                        method: 'GET',
-                        url: '/test2'
-                    };
+            before(async () => {
+
+                requestOpts = {
+                    method: 'GET',
+                    url: '/test2'
+                };
+            });
+
+            describe('User ip address has valid network part', () => {
+
+                it('authorizes user', async () => {
+
+                    stubbedClientAddress = '192.143.4.4';
+                    const res = await serverInjectAsync(requestOpts);
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.result.success).equals(true);
                 });
-    
-                describe('authorizes a user', () => {
-    
-                    it('user ip address has valid network part #1', async () => {
-    
-                        stubbedClientAddress = '192.143.4.4';
-                        const res = await serverInjectAsync(requestOpts);
-                        expect(res.statusCode).to.equal(200);
-                        expect(res.result.success).equals(true);
-                    });
-                    it('user ip address has valid network part #2', async () => {
-    
-                        stubbedClientAddress = '192.145.0.0';
-                        const res = await serverInjectAsync(requestOpts);
-                        expect(res.statusCode).to.equal(200);
-                        expect(res.result.success).equals(true);
-                    });
+                it('authorizes user', async () => {
+
+                    stubbedClientAddress = '192.145.0.0';
+                    const res = await serverInjectAsync(requestOpts);
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.result.success).equals(true);
                 });
-                describe('rejects user', () => {
-    
-                    it('user ip address does not belong in required network range #1', async () => {
-    
-                        stubbedClientAddress = '172.18.4.4';
-                        const res = await serverInjectAsync(requestOpts);
-                        expect(res.statusCode).to.equal(401);
-                        expect(res.result.message).equals('Forbidden access');
-                    });
-                    it('user ip address does not belong in required network range #2', async () => {
-    
-                        stubbedClientAddress = '192.149.1.4';
-                        const res = await serverInjectAsync(requestOpts);
-                        expect(res.statusCode).to.equal(401);
-                        expect(res.result.message).equals('Forbidden access');
-                    });
+            });
+            describe('User ip address does not belong in required network range', () => {
+
+                it('rejects user', async () => {
+
+                    stubbedClientAddress = '172.18.4.4';
+                    const res = await serverInjectAsync(requestOpts);
+                    expect(res.statusCode).to.equal(401);
+                    expect(res.result.message).equals('Forbidden access');
+                });
+                it('rejects user', async () => {
+
+                    stubbedClientAddress = '192.149.1.4';
+                    const res = await serverInjectAsync(requestOpts);
+                    expect(res.statusCode).to.equal(401);
+                    expect(res.result.message).equals('Forbidden access');
                 });
             });
         });
     });
-    describe('Testing vpc-ip-whitelist auth strategy before strategy that rejects the user', () => {
+    describe('Request is processed by test-ip-whitelist strategy followed by second strategy that rejects the user', () => {
 
-        describe('Testing /test1 route', () => {
+        describe('Testing /test3 route', () => {
 
             before(async () => {
 
@@ -276,16 +278,19 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 };
             });
 
-            describe('rejects user', () => {
+            describe('User ip address has valid network part', () => {
 
-                it('user ip address has valid network part, but get rejected on next strategy', async () => {
+                it('gets rejected on next strategy', async () => {
 
                     stubbedClientAddress = '192.168.4.4';
                     const res = await serverInjectAsync(requestOpts);
                     expect(res.statusCode).to.equal(401);
                     expect(res.result.message).equals('Access denied');
                 });
-                it('user ip address does not belong in required network range, and gets rejected immediately', async () => {
+            });
+
+            describe('User ip address does not belong in required network range', () => {
+                it('gets rejected immediately', async () => {
 
                     stubbedClientAddress = '172.35.4.4';
                     const res = await serverInjectAsync(requestOpts);

@@ -211,6 +211,7 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 });
             });
             describe('User has invalid ip address', () => {
+
                 it('rejects user', async () => {
 
                     stubbedClientAddress = '30.3.0.300';
@@ -290,6 +291,7 @@ describe('Hapi-ip-whitelist filter logic', () => {
             });
 
             describe('User ip address does not belong in required network range', () => {
+
                 it('gets rejected immediately', async () => {
 
                     stubbedClientAddress = '172.35.4.4';

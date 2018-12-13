@@ -1,9 +1,12 @@
 # Hapi-ip-whitelist
 This is an authentication scheme plugin for Hapi.js. Strategy defined with this scheme can be used before other strategies. If the authentication is affirmative it will pass the request to other defined strategies, if not it will terminate request with code 401.
+User of this package must define some other strategy and append it next to this one, in order for any request to be successful.
+
+The way this works is that if the ip address is invalid the strategy defined by this scheme will terminate the request calling `reply(Boom.unauthorized('message'))`, and if it is valid it will call `reply(Boom.unauthorized(null, 'ip-whitelist'))` passing it to other strategies defined on that specific route. Like it says in official Hapi documentation:
+
+> If the err passed to the reply() method includes a message, no additional strategies will be attempted. If the err does not include a message but does include the scheme name (e.g. Boom.unauthorized(null, 'Custom')), additional strategies will be attempted in the order of preference (defined in the route configuration).
 
 The name of the registered scheme is `ip-whitelist`.
-
-User of this package must define some other strategy and append it next to this one, in order for any request to be successful.
 
 ## Registering plugin
 ```javascript
@@ -18,18 +21,18 @@ Options parameter (Hapi options used when defining strategy) for this strategy c
 - subnetMask - Number (ex: 24) - Required - Standard mask determines network part of the network address
 - logger - Function Object - Optional (default: console.log) - Function used for logging problems
   ```javascript
-  function logger(msg) {
-      console.log(msg);
-  };
+    function logger(msg) {
+        console.log(msg);
+    };
   ```
 - validateFunction - Function Object - Optional (dafault: interlnalplugin function) - Custom function used to validate request with signature:
   ```javascript
-  function validateFunction({networkAddress, subnetMask, clientAddress}) {
+    function validateFunction({networkAddress, subnetMask, clientAddress}) {
       
-      /* do some work */
+        /* do some work */
 
-      return true || false; // Boolean determining wheter ip address is valid or not
-  };
+        return true || false; // Boolean determining wheter ip address is valid or not
+    };
   ```
 ### Example:
 ```javascript

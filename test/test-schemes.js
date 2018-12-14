@@ -3,16 +3,18 @@
 const Boom = require('boom');
 
 const alwaysPassScheme = (server, options) => ({
-        authenticate: (request, reply) => reply.continue({ credentials: true })
+    authenticate: async (request, h) => h.authenticated({ credentials: true })
 });
 
 const alwaysFailScheme = (server, options) => ({
-    authenticate: (request, reply) => reply(Boom.unauthorized('Access denied'))
+    authenticate: async (request, h) => h.unauthenticated(Boom.unauthorized('Access denied'))
 });
 
-exports.register = (plugin, options, next) => {
-    plugin.auth.scheme('always-pass', alwaysPassScheme);
-    plugin.auth.scheme('always-fail', alwaysFailScheme);
-    next();
+module.exports = {
+    name: 'test-schemes',
+    register: async (plugin) => {
+
+        plugin.auth.scheme('always-pass', alwaysPassScheme);
+        plugin.auth.scheme('always-fail', alwaysFailScheme);
+    }
 };
-exports.register.attributes = { name: 'testSchemes' };

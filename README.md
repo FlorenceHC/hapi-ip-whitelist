@@ -37,9 +37,9 @@ Options parameter (Hapi options used when defining strategy) for this strategy c
         console.log(msg);
     };
   ```
-- validateFunction - Function Object - Optional (dafault: interlnalplugin function) - Custom function used to validate request with signature:
+- validationFunction - Function Object - Optional (dafault: interlnalplugin function) - Can be both async and a regular function. Must return Boolean or Promise that will resolve to Boolean. Example:
   ```javascript
-    function validateFunction({networkAddress, subnetMask, clientAddress}) {
+    function async validationFunction({networkAddress, subnetMask, clientAddress}) {
       
         /* do some work */
 

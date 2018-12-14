@@ -161,21 +161,29 @@ describe('Hapi-ip-whitelist filter logic', () => {
 
         server.auth.strategy('test-ip-whitelist1', 'ip-whitelist', {
             networkAddress: '172.24.0.0',
-            subnetMask: 16
+            subnetMask: 16,
+            forwardToNextStrategy: true
         });
         server.auth.strategy('test-ip-whitelist2', 'ip-whitelist', {
             networkAddress: '192.143.0.0',
-            subnetMask: 14
+            subnetMask: 14,
+            forwardToNextStrategy: true
         });
         server.auth.strategy('test-ip-whitelist3', 'ip-whitelist', {
+            networkAddress: '192.143.0.0',
+            subnetMask: 16,
+            forwardToNextStrategy: false
+        });
+        server.auth.strategy('test-ip-whitelist4', 'ip-whitelist', {
             networkAddress: '192.168.0.0',
-            subnetMask: 16
+            subnetMask: 16,
+            forwardToNextStrategy: true
         });
         server.auth.strategy('always-pass', 'always-pass');
         server.auth.strategy('always-fail', 'always-fail');
 
         addRoutes(server, [1, 2], true);
-        addRoutes(server, [3], false);
+        addRoutes(server, [3, 4], false);
     });
 
     describe('Request is processed by test-ip-whitelist strategy followed by second strategy with that authorizes user', () => {
@@ -295,7 +303,7 @@ describe('Hapi-ip-whitelist filter logic', () => {
             });
         });
     });
-    describe('Request is processed by test-ip-whitelist strategy followed by second strategy that rejects the user', () => {
+    describe('Authentication is only done by test-ip-whitelist strategy', () => {
 
         describe('Testing /test3 route', () => {
 
@@ -304,6 +312,40 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 requestOpts = {
                     method: 'GET',
                     url: '/test3'
+                };
+            });
+
+            describe('User ip address has valid network part', () => {
+
+                it('authorizes user', async () => {
+
+                    stubbedClientAddress = '192.143.4.4';
+                    const res = await serverInjectAsync(requestOpts);
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.result.success).equals(true);
+                });
+            });
+            describe('User ip address does not belong in required network range', () => {
+
+                it('rejects user', async () => {
+
+                    stubbedClientAddress = '192.149.1.4';
+                    const res = await serverInjectAsync(requestOpts);
+                    expect(res.statusCode).to.equal(401);
+                    expect(res.result.message).equals('Forbidden access');
+                });
+            });
+        });
+    });
+    describe('Request is processed by test-ip-whitelist strategy followed by second strategy that rejects the user', () => {
+
+        describe('Testing /test4 route', () => {
+
+            before(async () => {
+
+                requestOpts = {
+                    method: 'GET',
+                    url: '/test4'
                 };
             });
 

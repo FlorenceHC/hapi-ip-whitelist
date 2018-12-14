@@ -1,14 +1,16 @@
 # Hapi-ip-whitelist
 
+(**Note**: The Hapi-ip-whitelist v2.x is meant for use with Hapi v17. For Hapi v16 use v1.x)
+
 This is an authentication scheme plugin for Hapi.js. Strategy defined with this scheme can be used before other strategies or as a standalone strategy. 
 The name of the registered scheme is `ip-whitelist`.
 
 ### Use case #1: Addition to other strategies
 Put the strategy defined for this scheme to be first on the route you want to config. When the request arrives if the authentication is affirmative it will pass the request to other defined strategies, if not it will terminate request with code 401. 
 
-The way this works is that if the ip address is invalid the strategy defined by this scheme will terminate the request calling `reply(Boom.unauthorized('message'))`, and if it is valid it will call `reply(Boom.unauthorized(null, 'ip-whitelist'))` passing it to other strategies defined on that specific route. Like it says in official Hapi documentation:
+The way this works is that if the ip address is invalid the strategy defined by this scheme will terminate the request calling `h.unauthenticated(Boom.unauthorized('message'))`, and if it is valid it will call `h.unauthenticated(Boom.unauthorized(null, 'ip-whitelist'))` passing it to other strategies defined on that specific route. Like it says in official Hapi documentation:
 
-> If the err passed to the reply() method includes a message, no additional strategies will be attempted. If the err does not include a message but does include the scheme name (e.g. Boom.unauthorized(null, 'Custom')), additional strategies will be attempted in the order of preference (defined in the route configuration).
+> When the scheme authenticate() method implementation throws an error or calls h.unauthenticated(), the specifics of the error affect whether additional authentication strategies will be attempted (if configured for the route). If the error includes a message, no additional strategies will be attempted. If the err does not include a message but does include the scheme name (e.g. Boom.unauthorized(null, 'Custom')), additional strategies will be attempted in the order of preference.
 
 ### Use case #2: Standalone strategy
 When the request arrives if the authentication is affirmative it will authenticate user with
@@ -18,13 +20,13 @@ When the request arrives if the authentication is affirmative it will authentica
 ## Registering plugin
 ```javascript
     const hapiIpWhitelist = require('hapi-ip-whitelist');
-    const server = new Hapi.server();
+    
+    const start = async () => {
+        const server = Hapi.server();
+        await server.register(hapiIpWhitelist);
+    };
 
-    server.register(hapiIpWhitelist, (err) => {
-        if (err) {
-            console.log(err);
-        }
-    );
+    start();
 ```
 ## Defining strategy
 Options parameter (Hapi options used when defining strategy) for this strategy contains next properties:
@@ -37,9 +39,9 @@ Options parameter (Hapi options used when defining strategy) for this strategy c
         console.log(msg);
     };
   ```
-- validateFunction - Function Object - Optional (dafault: interlnalplugin function) - Custom function used to validate request with signature:
+- validationFunction - Function Object - Optional (dafault: interlnalplugin function) - Can be both async or regular function. Must return Boolean or Promise that will resolve to Boolean. Example:
   ```javascript
-    function validateFunction({networkAddress, subnetMask, clientAddress}) {
+    function async validationFunction({networkAddress, subnetMask, clientAddress}) {
       
         /* do some work */
 

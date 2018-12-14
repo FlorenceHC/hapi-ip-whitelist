@@ -20,22 +20,19 @@ let server;
 let requestOpts;
 let stubbedClientAddress;
 
-const serverInjectAsync = (opts) => new Promise(server.inject.bind(server, opts));
-const serverRegisterAsync = (plugin) => new Promise(server.register.bind(server, plugin));
-
 const addRoutes = (serverInstance, nums, pass) => {
 
     const ipWhitelistRouteConfig = (num) => ({
         auth: {
             strategies: [`test-ip-whitelist${num}`, `always-${pass ? 'pass' : 'fail'}`]
         },
-        handler: (req, reply) => reply({ success: true }),
+        handler: async (req, h) => ({ success: true }),
         ext: {
             onPreAuth: {
-                method: (req, reply) => {
+                method: (req, h) => {
 
                     req.info.remoteAddress = stubbedClientAddress;
-                    reply.continue();
+                    return h.continue;
                 }
             }
         }
@@ -54,9 +51,8 @@ describe('Hapi-ip-whitelist strategy instantiation', () => {
 
     beforeEach(async () => {
 
-        server = new Hapi.Server();
-        server.connection();
-        await serverRegisterAsync(HapiIpWhitelist);
+        server = Hapi.Server();
+        await server.register(HapiIpWhitelist);
     });
 
     it('fails because of missing options', async () => {
@@ -154,10 +150,9 @@ describe('Hapi-ip-whitelist filter logic', () => {
 
     before(async () => {
 
-        server = new Hapi.Server();
-        server.connection();
-        await serverRegisterAsync(HapiIpWhitelist);
-        await serverRegisterAsync(TestSchemes);
+        server = Hapi.Server();
+        await server.register(HapiIpWhitelist);
+        await server.register(TestSchemes);
 
         server.auth.strategy('test-ip-whitelist1', 'ip-whitelist', {
             networkAddress: '172.24.0.0',
@@ -203,21 +198,21 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 it('authorizes user', async () => {
 
                     stubbedClientAddress = '172.24.4.4';
-                    const res = await serverInjectAsync(requestOpts);
+                    const res = await server.inject(requestOpts); console.log(res);
                     expect(res.statusCode).to.equal(200);
                     expect(res.result.success).equals(true);
                 });
                 it('authorizes user', async () => {
 
                     stubbedClientAddress = '172.24.0.0';
-                    const res = await serverInjectAsync(requestOpts);
+                    const res = await server.inject(requestOpts);
                     expect(res.statusCode).to.equal(200);
                     expect(res.result.success).equals(true);
                 });
                 it('authorizes user', async () => {
 
                     stubbedClientAddress = '172.24.255.255';
-                    const res = await serverInjectAsync(requestOpts);
+                    const res = await server.inject(requestOpts);
                     expect(res.statusCode).to.equal(200);
                     expect(res.result.success).equals(true);
                 });
@@ -227,21 +222,21 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 it('rejects user', async () => {
 
                     stubbedClientAddress = '172.18.4.4';
-                    const res = await serverInjectAsync(requestOpts);
+                    const res = await server.inject(requestOpts);
                     expect(res.statusCode).to.equal(401);
                     expect(res.result.message).equals('Forbidden access');
                 });
                 it('rejects user', async () => {
 
                     stubbedClientAddress = '192.0.1.4';
-                    const res = await serverInjectAsync(requestOpts);
+                    const res = await server.inject(requestOpts);
                     expect(res.statusCode).to.equal(401);
                     expect(res.result.message).equals('Forbidden access');
                 });
                 it('rejects user', async () => {
 
                     stubbedClientAddress = '172.35.4.4';
-                    const res = await serverInjectAsync(requestOpts);
+                    const res = await server.inject(requestOpts);
                     expect(res.statusCode).to.equal(401);
                     expect(res.result.message).equals('Forbidden access');
                 });
@@ -251,7 +246,7 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 it('rejects user', async () => {
 
                     stubbedClientAddress = '30.3.0.300';
-                    const res = await serverInjectAsync(requestOpts);
+                    const res = await server.inject(requestOpts);
                     expect(res.statusCode).to.equal(401);
                     expect(res.result.message).equals('Forbidden access');
                 });
@@ -272,14 +267,14 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 it('authorizes user', async () => {
 
                     stubbedClientAddress = '192.143.4.4';
-                    const res = await serverInjectAsync(requestOpts);
+                    const res = await server.inject(requestOpts);
                     expect(res.statusCode).to.equal(200);
                     expect(res.result.success).equals(true);
                 });
                 it('authorizes user', async () => {
 
                     stubbedClientAddress = '192.145.0.0';
-                    const res = await serverInjectAsync(requestOpts);
+                    const res = await server.inject(requestOpts);
                     expect(res.statusCode).to.equal(200);
                     expect(res.result.success).equals(true);
                 });
@@ -289,14 +284,14 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 it('rejects user', async () => {
 
                     stubbedClientAddress = '172.18.4.4';
-                    const res = await serverInjectAsync(requestOpts);
+                    const res = await server.inject(requestOpts);
                     expect(res.statusCode).to.equal(401);
                     expect(res.result.message).equals('Forbidden access');
                 });
                 it('rejects user', async () => {
 
                     stubbedClientAddress = '192.149.1.4';
-                    const res = await serverInjectAsync(requestOpts);
+                    const res = await server.inject(requestOpts);
                     expect(res.statusCode).to.equal(401);
                     expect(res.result.message).equals('Forbidden access');
                 });
@@ -320,7 +315,7 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 it('authorizes user', async () => {
 
                     stubbedClientAddress = '192.143.4.4';
-                    const res = await serverInjectAsync(requestOpts);
+                    const res = await server.inject(requestOpts);
                     expect(res.statusCode).to.equal(200);
                     expect(res.result.success).equals(true);
                 });
@@ -330,7 +325,7 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 it('rejects user', async () => {
 
                     stubbedClientAddress = '192.149.1.4';
-                    const res = await serverInjectAsync(requestOpts);
+                    const res = await server.inject(requestOpts);
                     expect(res.statusCode).to.equal(401);
                     expect(res.result.message).equals('Forbidden access');
                 });
@@ -354,7 +349,7 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 it('gets rejected on next strategy', async () => {
 
                     stubbedClientAddress = '192.168.4.4';
-                    const res = await serverInjectAsync(requestOpts);
+                    const res = await server.inject(requestOpts);
                     expect(res.statusCode).to.equal(401);
                     expect(res.result.message).equals('Access denied');
                 });
@@ -365,7 +360,7 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 it('gets rejected immediately', async () => {
 
                     stubbedClientAddress = '172.35.4.4';
-                    const res = await serverInjectAsync(requestOpts);
+                    const res = await server.inject(requestOpts);
                     expect(res.statusCode).to.equal(401);
                     expect(res.result.message).equals('Forbidden access');
                 });

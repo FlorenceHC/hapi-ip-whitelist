@@ -1,6 +1,7 @@
 # Hapi-ip-whitelist
 
-This is an authentication scheme plugin for Hapi.js. Strategy defined with this scheme can be used before other strategies or as a standalone strategy. 
+This is an authentication scheme plugin for Hapi.js. Strategy defined with this scheme can be used before other strategies or as a standalone strategy. Although it is strongly recommended that this scheme is used only as an addition to other secure authentication mechanisms.
+
 The name of the registered scheme is `ip-whitelist`.
 
 ### Use case #1: Addition to other strategies
@@ -37,7 +38,7 @@ Options parameter (Hapi options used when defining strategy) for this strategy c
         console.log(msg);
     };
   ```
-- validationFunction - Function Object - Optional (dafault: interlnalplugin function) - Can be both async and a regular function. Must return Boolean or Promise that will resolve to Boolean. Example:
+- validationFunction - Function Object - Optional (default: internalplugin function) - Can be both async and a regular function. Must return Boolean or Promise that will resolve to Boolean. Example:
   ```javascript
     function async validationFunction({networkAddress, subnetMask, clientAddress}) {
       

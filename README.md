@@ -40,7 +40,7 @@ Options parameter (Hapi options used when defining strategy) for this strategy c
         console.log(msg);
     };
   ```
-- validationFunction - Function Object - Optional (dafault: interlnalplugin function) - Can be both async or regular function. Must return Boolean or Promise that will resolve to Boolean. Example:
+- validationFunction - Function Object - Optional (default: internalplugin function) - Can be both async or regular function. Must return Boolean or Promise that will resolve to Boolean. Example:
   ```javascript
     function async validationFunction({networkAddress, subnetMask, clientAddress}) {
       

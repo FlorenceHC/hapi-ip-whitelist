@@ -4,7 +4,7 @@ This is an authentication scheme plugin for Hapi.js. Strategy defined with this 
 The name of the registered scheme is `ip-whitelist`.
 
 ### Use case #1: Addition to other strategies
-Put the strategy defined for this scheme to be first on the route you want to config. When the request arrives if the authentication is affirmative it will pass the request to other defined strategies, if not it will terminate request with code 401. 
+Put the strategy defined for this scheme to be first on the route you want to config. When the request arrives if the authentication is affirmative it will pass the request to other defined strategies, if not it will terminate request with code 401. This can be useful if you want to limit the requests to certain networks only, for example inside AWS VPC (Virtual Private Cloud).
 
 The way this works is that if the ip address is invalid the strategy defined by this scheme will terminate the request calling `reply(Boom.unauthorized('message'))`, and if it is valid it will call `reply(Boom.unauthorized(null, 'ip-whitelist'))` passing it to other strategies defined on that specific route. Like it says in official Hapi documentation:
 
@@ -46,7 +46,7 @@ Options parameter (Hapi options used when defining strategy) for this strategy c
         return true || false; // Boolean determining whether ip address is valid or not
     };
   ```
-### Example:
+### Example
 ```javascript
     server.auth.strategy('custom-ip-whitelist', 'ip-whitelist', {
         networkAddress: '192.168.0.0',

@@ -22,9 +22,9 @@ let stubbedClientAddress;
 
 const addRoutes = (serverInstance, nums, pass) => {
 
-    const ipWhitelistRouteConfig = (num) => ({
+    const ipWhitelistRouteConfig = (type) => ({
         auth: {
-            strategies: [`test-ip-whitelist${num}`, `always-${pass ? 'pass' : 'fail'}`]
+            strategies: [`${type}`, `always-${pass ? 'pass' : 'fail'}`]
         },
         handler: async (req, h) => ({ success: true }),
         ext: {
@@ -37,12 +37,12 @@ const addRoutes = (serverInstance, nums, pass) => {
             }
         }
     });
-    nums.forEach((num) => {
+    nums.forEach((type) => {
 
         serverInstance.route({
             method: 'GET',
-            path: `/test${num}`,
-            config: ipWhitelistRouteConfig(num)
+            path: `/${type}`,
+            config: ipWhitelistRouteConfig(type)
         });
     });
 };
@@ -154,22 +154,22 @@ describe('Hapi-ip-whitelist filter logic', () => {
         await server.register(HapiIpWhitelist);
         await server.register(TestSchemes);
 
-        server.auth.strategy('test-ip-whitelist1', 'ip-whitelist', {
+        server.auth.strategy('ip-whitelist-before-affirmative-strategy-1', 'ip-whitelist', {
             networkAddress: '172.24.0.0',
             subnetMask: 16,
             forwardToNextStrategy: true
         });
-        server.auth.strategy('test-ip-whitelist2', 'ip-whitelist', {
+        server.auth.strategy('ip-whitelist-before-affirmative-strategy-2', 'ip-whitelist', {
             networkAddress: '192.143.0.0',
             subnetMask: 14,
             forwardToNextStrategy: true
         });
-        server.auth.strategy('test-ip-whitelist3', 'ip-whitelist', {
+        server.auth.strategy('only-ip-whitelist', 'ip-whitelist', {
             networkAddress: '192.143.0.0',
             subnetMask: 16,
             forwardToNextStrategy: false
         });
-        server.auth.strategy('test-ip-whitelist4', 'ip-whitelist', {
+        server.auth.strategy('ip-whitelist-before-failing-strategy', 'ip-whitelist', {
             networkAddress: '192.168.0.0',
             subnetMask: 16,
             forwardToNextStrategy: true
@@ -177,19 +177,19 @@ describe('Hapi-ip-whitelist filter logic', () => {
         server.auth.strategy('always-pass', 'always-pass');
         server.auth.strategy('always-fail', 'always-fail');
 
-        addRoutes(server, [1, 2], true);
-        addRoutes(server, [3, 4], false);
+        addRoutes(server, ['ip-whitelist-before-affirmative-strategy-1', 'ip-whitelist-before-affirmative-strategy-2'], true);
+        addRoutes(server, ['only-ip-whitelist', 'ip-whitelist-before-failing-strategy'], false);
     });
 
     describe('Request is processed by test-ip-whitelist strategy followed by second strategy with that authorizes user', () => {
 
-        describe('Testing /test1 route', () => {
+        describe('Testing /ip-whitelist-before-affirmative-strategy-1 route', () => {
 
             before(async () => {
 
                 requestOpts = {
                     method: 'GET',
-                    url: '/test1'
+                    url: '/ip-whitelist-before-affirmative-strategy-1'
                 };
             });
 
@@ -198,7 +198,7 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 it('authorizes user', async () => {
 
                     stubbedClientAddress = '172.24.4.4';
-                    const res = await server.inject(requestOpts); console.log(res);
+                    const res = await server.inject(requestOpts);
                     expect(res.statusCode).to.equal(200);
                     expect(res.result.success).equals(true);
                 });
@@ -252,13 +252,13 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 });
             });
         });
-        describe('Testing /test2 route', () => {
+        describe('Testing /ip-whitelist-before-affirmative-strategy-2 route', () => {
 
             before(async () => {
 
                 requestOpts = {
                     method: 'GET',
-                    url: '/test2'
+                    url: '/ip-whitelist-before-affirmative-strategy-2'
                 };
             });
 
@@ -300,13 +300,13 @@ describe('Hapi-ip-whitelist filter logic', () => {
     });
     describe('Authentication is only done by test-ip-whitelist strategy', () => {
 
-        describe('Testing /test3 route', () => {
+        describe('Testing /only-ip-whitelist route', () => {
 
             before(async () => {
 
                 requestOpts = {
                     method: 'GET',
-                    url: '/test3'
+                    url: '/only-ip-whitelist'
                 };
             });
 
@@ -334,13 +334,13 @@ describe('Hapi-ip-whitelist filter logic', () => {
     });
     describe('Request is processed by test-ip-whitelist strategy followed by second strategy that rejects the user', () => {
 
-        describe('Testing /test4 route', () => {
+        describe('Testing /ip-whitelist-before-failing-strategy route', () => {
 
             before(async () => {
 
                 requestOpts = {
                     method: 'GET',
-                    url: '/test4'
+                    url: '/ip-whitelist-before-failing-strategy'
                 };
             });
 

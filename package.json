@@ -1,6 +1,6 @@
 {
-  "name": "@florencehealthcare/hapi-ip-whitelist",
-  "version": "2.0.0",
+  "name": "hapi-ip-whitelist",
+  "version": "2.0.1",
   "description": "Hapi auth scheme that can be prepended to other auth schemes and used for filtering requests based on ip addresses",
   "repository": "https://github.com/FlorenceHC/fhc/tree/master/packages/fhc-ip-whitelist",
   "main": "lib/plugin.js",
@@ -33,5 +33,5 @@
     "plugin"
   ],
   "author": "FlorenceHC",
-  "license": ""
+  "license": "MIT"
 }

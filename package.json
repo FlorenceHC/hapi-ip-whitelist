@@ -1,6 +1,6 @@
 {
   "name": "@florencehealthcare/hapi-ip-whitelist",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Hapi auth scheme that can be prepended to other auth schemes and used for filtering requests based on ip addresses",
   "repository": "https://github.com/FlorenceHC/fhc/tree/master/packages/fhc-ip-whitelist",
   "main": "lib/plugin.js",
@@ -9,13 +9,15 @@
   },
   "scripts": {
     "test": "lab --globals code",
-    "test-debug": "node --inspect-brk=0.0.0.0:9000 ./node_modules/.bin/lab -m 60000"
+    "test-debug": "node --inspect-brk=0.0.0.0:9000 ./node_modules/.bin/lab -m 60000",
+    "lint": "./node_modules/.bin/eslint ."
   },
   "dependencies": {
     "boom": "^7.3.0"
   },
   "devDependencies": {
     "code": "^5.2.4",
+    "eslint": "^5.10.0",
     "hapi": "^16.7.0",
     "lab": "^18.0.0"
   },

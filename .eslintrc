@@ -1,0 +1,11 @@
+{
+    "root": true,
+    "extends": "eslint-config-hapi",
+    "parserOptions": {
+        "ecmaVersion": 8
+    },
+    "rules": {
+        "require-await": "off"
+    }
+}
+  

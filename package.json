@@ -1,8 +1,8 @@
 {
   "name": "hapi-ip-whitelist",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Hapi auth scheme that can be prepended to other auth schemes and used for filtering requests based on ip addresses",
-  "repository": "https://github.com/FlorenceHC/fhc/tree/master/packages/fhc-ip-whitelist",
+  "repository": "https://github.com/FlorenceHC/hapi-ip-whitelist",
   "main": "lib/plugin.js",
   "directories": {
     "lib": "lib"

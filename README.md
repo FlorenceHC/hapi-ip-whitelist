@@ -38,16 +38,8 @@ Options parameter (Hapi options used when defining strategy) for this strategy c
         console.log(msg);
     };
   ```
-- validationFunction - Function Object - Optional (default: internalplugin function) - Can be both async and a regular function. Must return Boolean or Promise that will resolve to Boolean. Example:
-  ```javascript
-    function async validationFunction({networkAddress, subnetMask, clientAddress}) {
-      
-        /* do some work */
 
-        return true || false; // Boolean determining whether ip address is valid or not
-    };
-  ```
-### Example
+## Example
 ```javascript
     server.auth.strategy('custom-ip-whitelist', 'ip-whitelist', {
         networkAddress: '192.168.0.0',

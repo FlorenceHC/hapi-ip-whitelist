@@ -116,22 +116,6 @@ describe('Hapi-ip-whitelist strategy instantiation', () => {
 
         expect(error).to.exist();
     });
-    it('fails because of invalid validateFunction', async () => {
-
-        let error;
-        try {
-            server.auth.strategy('test-ip-whitelist1', 'ip-whitelist', {
-                networkAddress: '132.32.2.2',
-                subnetMask: 16,
-                validationFunction: 'string, not a function'
-            });
-        }
-        catch (err) {
-            error = err;
-        }
-
-        expect(error).to.exist();
-    });
     it('fails because of invalid logger function', async () => {
 
         let error;

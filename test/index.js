@@ -23,7 +23,7 @@ let stubbedClientAddress;
 const serverInjectAsync = (opts) => new Promise(server.inject.bind(server, opts));
 const serverRegisterAsync = (plugin) => new Promise(server.register.bind(server, plugin));
 
-const addRoutes = (serverInstance, routeTypes, pass) => {
+const addRoutes = (serverInstance, routeTypes, pass, proxy) => {
 
     const ipWhitelistRouteConfig = (type) => ({
         auth: {
@@ -34,7 +34,13 @@ const addRoutes = (serverInstance, routeTypes, pass) => {
             onPreAuth: {
                 method: (req, reply) => {
 
-                    req.info.remoteAddress = stubbedClientAddress;
+                    if (proxy) {
+                        req.headers['x-forwarded-for'] = stubbedClientAddress;
+                    }
+                    else {
+                        req.info.remoteAddress = stubbedClientAddress;
+                    }
+
                     reply.continue();
                 }
             }
@@ -194,6 +200,11 @@ describe('Hapi-ip-whitelist filter logic', () => {
             networkAddress: '192.168.0.0',
             subnetMask: 16
         });
+        server.auth.strategy('ip-whitelist-handling-proxied-request', 'ip-whitelist', {
+            networkAddress: '172.24.0.0',
+            subnetMask: 16,
+            addressWhitelist: ['192.143.0.1', '192.143.10.10']
+        });
         server.auth.strategy('always-pass', 'always-pass');
         server.auth.strategy('always-fail', 'always-fail');
 
@@ -208,6 +219,7 @@ describe('Hapi-ip-whitelist filter logic', () => {
             true
         );
         addRoutes(server, ['only-ip-whitelist', 'ip-whitelist-before-failing-strategy'], false);
+        addRoutes(server, ['ip-whitelist-handling-proxied-request'], true, true)
     });
 
     describe('Request is processed by test-ip-whitelist strategy followed by second strategy with that authorizes user', () => {
@@ -505,6 +517,63 @@ describe('Hapi-ip-whitelist filter logic', () => {
                 it('gets rejected immediately', async () => {
 
                     stubbedClientAddress = '172.35.4.4';
+                    const res = await serverInjectAsync(requestOpts);
+                    expect(res.statusCode).to.equal(401);
+                    expect(res.result.message).equals('Forbidden access');
+                });
+            });
+        });
+    });
+    describe('Validation is done on the request that was forwarded by a proxy', () => {
+
+        describe('Testing /ip-whitelist-handling-proxied-request route', () => {
+
+            before(async () => {
+
+                requestOpts = {
+                    method: 'GET',
+                    url: '/ip-whitelist-handling-proxied-request'
+                };
+            });
+
+            describe('User ip address belongs to the subnet', () => {
+
+                it('authorizes user', async () => {
+
+                    stubbedClientAddress = '172.24.0.5';
+                    const res = await serverInjectAsync(requestOpts);
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.result.success).equals(true);
+                });
+            });
+
+            describe('User ip address belongs to the addressWhitelist', () => {
+
+                it('authorizes user', async () => {
+
+                    stubbedClientAddress = '192.143.0.1';
+                    const res = await serverInjectAsync(requestOpts);
+                    expect(res.statusCode).to.equal(200);
+                    expect(res.result.success).equals(true);
+                });
+            });
+
+            describe('User ip address does not belong neither to subnet nor addressWhitelist', () => {
+
+                it('rejects user', async () => {
+
+                    stubbedClientAddress = '172.11.4.4';
+                    const res = await serverInjectAsync(requestOpts);
+                    expect(res.statusCode).to.equal(401);
+                    expect(res.result.message).equals('Forbidden access');
+                });
+            });
+
+            describe('User has invalid ip address', () => {
+
+                it('rejects user', async () => {
+
+                    stubbedClientAddress = '30.3.0.300';
                     const res = await serverInjectAsync(requestOpts);
                     expect(res.statusCode).to.equal(401);
                     expect(res.result.message).equals('Forbidden access');

@@ -2,6 +2,8 @@
 
 This is an authentication scheme plugin for Hapi.js. Strategy defined with this scheme can be used before other strategies or as a standalone strategy. Although it is strongly recommended that this scheme is used only as an addition to other secure authentication mechanisms.
 
+This strategy is applicable to both direct request and proxied request. Although for proxied requests it will only work for level 1 proxying i.e. for the requests that only pass through one proxy until they reach the server (This is a security measure because ip addressed from requests that go through several proxies can be easily spoofed). The client address in proxied requests is read from `x-forwarded-for` header for now only. 
+
 The name of the registered scheme is `ip-whitelist`.
 
 ### Use case #1: Addition to other strategies
@@ -14,7 +16,6 @@ The way this works is that if the ip address is invalid the strategy defined by 
 ### Use case #2: Standalone strategy
 When the request arrives if the authentication is affirmative it will authenticate user with
 `{ credentials: userIpAddress }`, if not it will again terminate request with code 401.
-
 
 ## Registering plugin
 ```javascript
@@ -39,6 +40,7 @@ Options parameter (Hapi options used when defining strategy) for this strategy c
         console.log('Whitelist custom error message:' + msg);
     };
   ```
+
 You must provide either `networkAddress` and `subnetMask` for the plugin to be able to check if the ip address is in the given network range, or you can provide `addressWhitelist` to explicitly allow some ip addresses. Or you can provide both, and the request will be forwarded for further processing if the client's address is either in provided subnet or whitelist array. But if you omit both of config options an error will be thrown since the plugin would not have a way to check address validity. 
 ## Example
 ```javascript

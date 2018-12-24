@@ -116,6 +116,32 @@ describe('Hapi-ip-whitelist strategy instantiation', () => {
 
         expect(error).to.exist();
     });
+    it('fails because of invalid addressWhitelist array', async () => {
+
+        let error;
+        try {
+            server.auth.strategy('test-ip-whitelist1', 'ip-whitelist', {
+                addressWhitelist: 4
+            });
+        }
+        catch (err) {
+            error = err;
+        }
+
+        expect(error).to.exist();
+    });
+    it('fails because of missing addressWhitelist and subnet', async () => {
+
+        let error;
+        try {
+            server.auth.strategy('test-ip-whitelist1', 'ip-whitelist', {});
+        }
+        catch (err) {
+            error = err;
+        }
+
+        expect(error).to.exist();
+    });
     it('fails because of invalid logger function', async () => {
 
         let error;
@@ -145,13 +171,19 @@ describe('Hapi-ip-whitelist filter logic', () => {
 
         server.auth.strategy('ip-whitelist-before-affirmative-strategy-1', 'ip-whitelist', {
             networkAddress: '172.24.0.0',
-            subnetMask: 16,
-            forwardToNextStrategy: true
+            subnetMask: 16
         });
         server.auth.strategy('ip-whitelist-before-affirmative-strategy-2', 'ip-whitelist', {
             networkAddress: '192.143.0.0',
-            subnetMask: 14,
-            forwardToNextStrategy: true
+            subnetMask: 14
+        });
+        server.auth.strategy('ip-whitelist-before-affirmative-strategy-3', 'ip-whitelist', {
+            addressWhitelist: ['192.143.0.1', '192.143.10.10']
+        });
+        server.auth.strategy('ip-whitelist-before-affirmative-strategy-4', 'ip-whitelist', {
+            networkAddress: '172.24.0.0',
+            subnetMask: 16,
+            addressWhitelist: ['192.143.0.1', '192.143.10.10']
         });
         server.auth.strategy('only-ip-whitelist', 'ip-whitelist', {
             networkAddress: '192.143.0.0',
@@ -160,129 +192,252 @@ describe('Hapi-ip-whitelist filter logic', () => {
         });
         server.auth.strategy('ip-whitelist-before-failing-strategy', 'ip-whitelist', {
             networkAddress: '192.168.0.0',
-            subnetMask: 16,
-            forwardToNextStrategy: true
+            subnetMask: 16
         });
         server.auth.strategy('always-pass', 'always-pass');
         server.auth.strategy('always-fail', 'always-fail');
 
-        addRoutes(server, ['ip-whitelist-before-affirmative-strategy-1', 'ip-whitelist-before-affirmative-strategy-2'], true);
+        addRoutes(
+            server,
+            [
+                'ip-whitelist-before-affirmative-strategy-1',
+                'ip-whitelist-before-affirmative-strategy-2',
+                'ip-whitelist-before-affirmative-strategy-3',
+                'ip-whitelist-before-affirmative-strategy-4'
+            ],
+            true
+        );
         addRoutes(server, ['only-ip-whitelist', 'ip-whitelist-before-failing-strategy'], false);
     });
 
     describe('Request is processed by test-ip-whitelist strategy followed by second strategy with that authorizes user', () => {
 
-        describe('Testing /ip-whitelist-before-affirmative-strategy-1 route', () => {
+        describe('Validation is done only via subnet', () => {
 
-            before(async () => {
+            describe('Testing /ip-whitelist-before-affirmative-strategy-1 route', () => {
 
-                requestOpts = {
-                    method: 'GET',
-                    url: '/ip-whitelist-before-affirmative-strategy-1'
-                };
+                before(async () => {
+
+                    requestOpts = {
+                        method: 'GET',
+                        url: '/ip-whitelist-before-affirmative-strategy-1'
+                    };
+                });
+
+                describe('User ip address has valid network part', () => {
+
+                    it('authorizes user', async () => {
+
+                        stubbedClientAddress = '172.24.4.4';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(200);
+                        expect(res.result.success).equals(true);
+                    });
+                    it('authorizes user', async () => {
+
+                        stubbedClientAddress = '172.24.0.0';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(200);
+                        expect(res.result.success).equals(true);
+                    });
+                    it('authorizes user', async () => {
+
+                        stubbedClientAddress = '172.24.255.255';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(200);
+                        expect(res.result.success).equals(true);
+                    });
+                });
+
+                describe('User ip address does not belong in required network range', () => {
+
+                    it('rejects user', async () => {
+
+                        stubbedClientAddress = '172.18.4.4';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(401);
+                        expect(res.result.message).equals('Forbidden access');
+                    });
+                    it('rejects user', async () => {
+
+                        stubbedClientAddress = '192.0.1.4';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(401);
+                        expect(res.result.message).equals('Forbidden access');
+                    });
+                    it('rejects user', async () => {
+
+                        stubbedClientAddress = '172.35.4.4';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(401);
+                        expect(res.result.message).equals('Forbidden access');
+                    });
+                });
+                describe('User has invalid ip address', () => {
+
+                    it('rejects user', async () => {
+
+                        stubbedClientAddress = '30.3.0.300';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(401);
+                        expect(res.result.message).equals('Forbidden access');
+                    });
+                });
             });
+            describe('Testing /ip-whitelist-before-affirmative-strategy-2 route', () => {
 
-            describe('User ip address has valid network part', () => {
+                before(async () => {
 
-                it('authorizes user', async () => {
-
-                    stubbedClientAddress = '172.24.4.4';
-                    const res = await serverInjectAsync(requestOpts);
-                    expect(res.statusCode).to.equal(200);
-                    expect(res.result.success).equals(true);
+                    requestOpts = {
+                        method: 'GET',
+                        url: '/ip-whitelist-before-affirmative-strategy-2'
+                    };
                 });
-                it('authorizes user', async () => {
 
-                    stubbedClientAddress = '172.24.0.0';
-                    const res = await serverInjectAsync(requestOpts);
-                    expect(res.statusCode).to.equal(200);
-                    expect(res.result.success).equals(true);
+                describe('User ip address has valid network part', () => {
+
+                    it('authorizes user', async () => {
+
+                        stubbedClientAddress = '192.143.4.4';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(200);
+                        expect(res.result.success).equals(true);
+                    });
+                    it('authorizes user', async () => {
+
+                        stubbedClientAddress = '192.145.0.0';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(200);
+                        expect(res.result.success).equals(true);
+                    });
                 });
-                it('authorizes user', async () => {
 
-                    stubbedClientAddress = '172.24.255.255';
-                    const res = await serverInjectAsync(requestOpts);
-                    expect(res.statusCode).to.equal(200);
-                    expect(res.result.success).equals(true);
-                });
-            });
-            describe('User ip address does not belong in required network range', () => {
+                describe('User ip address does not belong in required network range', () => {
 
-                it('rejects user', async () => {
+                    it('rejects user', async () => {
 
-                    stubbedClientAddress = '172.18.4.4';
-                    const res = await serverInjectAsync(requestOpts);
-                    expect(res.statusCode).to.equal(401);
-                    expect(res.result.message).equals('Forbidden access');
-                });
-                it('rejects user', async () => {
+                        stubbedClientAddress = '172.18.4.4';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(401);
+                        expect(res.result.message).equals('Forbidden access');
+                    });
+                    it('rejects user', async () => {
 
-                    stubbedClientAddress = '192.0.1.4';
-                    const res = await serverInjectAsync(requestOpts);
-                    expect(res.statusCode).to.equal(401);
-                    expect(res.result.message).equals('Forbidden access');
-                });
-                it('rejects user', async () => {
-
-                    stubbedClientAddress = '172.35.4.4';
-                    const res = await serverInjectAsync(requestOpts);
-                    expect(res.statusCode).to.equal(401);
-                    expect(res.result.message).equals('Forbidden access');
-                });
-            });
-            describe('User has invalid ip address', () => {
-
-                it('rejects user', async () => {
-
-                    stubbedClientAddress = '30.3.0.300';
-                    const res = await serverInjectAsync(requestOpts);
-                    expect(res.statusCode).to.equal(401);
-                    expect(res.result.message).equals('Forbidden access');
+                        stubbedClientAddress = '192.149.1.4';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(401);
+                        expect(res.result.message).equals('Forbidden access');
+                    });
                 });
             });
         });
-        describe('Testing /ip-whitelist-before-affirmative-strategy-2 route', () => {
+        describe('Validation is done only via addressWhitelist', () => {
 
-            before(async () => {
+            describe('Testing /ip-whitelist-before-affirmative-strategy-3 route', () => {
 
-                requestOpts = {
-                    method: 'GET',
-                    url: '/ip-whitelist-before-affirmative-strategy-2'
-                };
+                before(async () => {
+
+                    requestOpts = {
+                        method: 'GET',
+                        url: '/ip-whitelist-before-affirmative-strategy-3'
+                    };
+                });
+
+                describe('User ip address belongs to the addressWhitelist', () => {
+
+                    it('authorizes user', async () => {
+
+                        stubbedClientAddress = '192.143.0.1';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(200);
+                        expect(res.result.success).equals(true);
+                    });
+                    it('authorizes user', async () => {
+
+                        stubbedClientAddress = '192.143.10.10';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(200);
+                        expect(res.result.success).equals(true);
+                    });
+                });
+
+                describe('User ip address does not belong to the addressWhitelist', () => {
+
+                    it('rejects user', async () => {
+
+                        stubbedClientAddress = '172.18.4.4';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(401);
+                        expect(res.result.message).equals('Forbidden access');
+                    });
+                });
+
+                describe('User has invalid ip address', () => {
+
+                    it('rejects user', async () => {
+
+                        stubbedClientAddress = '30.3.0.300';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(401);
+                        expect(res.result.message).equals('Forbidden access');
+                    });
+                });
             });
+        });
+        describe('Validation is done only via subnet and via addressWhitelist', () => {
 
-            describe('User ip address has valid network part', () => {
+            describe('Testing /ip-whitelist-before-affirmative-strategy-4 route', () => {
 
-                it('authorizes user', async () => {
+                before(async () => {
 
-                    stubbedClientAddress = '192.143.4.4';
-                    const res = await serverInjectAsync(requestOpts);
-                    expect(res.statusCode).to.equal(200);
-                    expect(res.result.success).equals(true);
+                    requestOpts = {
+                        method: 'GET',
+                        url: '/ip-whitelist-before-affirmative-strategy-4'
+                    };
                 });
-                it('authorizes user', async () => {
 
-                    stubbedClientAddress = '192.145.0.0';
-                    const res = await serverInjectAsync(requestOpts);
-                    expect(res.statusCode).to.equal(200);
-                    expect(res.result.success).equals(true);
+                describe('User ip address belongs to the subnet', () => {
+
+                    it('authorizes user', async () => {
+
+                        stubbedClientAddress = '172.24.0.5';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(200);
+                        expect(res.result.success).equals(true);
+                    });
                 });
-            });
-            describe('User ip address does not belong in required network range', () => {
 
-                it('rejects user', async () => {
+                describe('User ip address belongs to the addressWhitelist', () => {
 
-                    stubbedClientAddress = '172.18.4.4';
-                    const res = await serverInjectAsync(requestOpts);
-                    expect(res.statusCode).to.equal(401);
-                    expect(res.result.message).equals('Forbidden access');
+                    it('authorizes user', async () => {
+
+                        stubbedClientAddress = '192.143.0.1';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(200);
+                        expect(res.result.success).equals(true);
+                    });
                 });
-                it('rejects user', async () => {
 
-                    stubbedClientAddress = '192.149.1.4';
-                    const res = await serverInjectAsync(requestOpts);
-                    expect(res.statusCode).to.equal(401);
-                    expect(res.result.message).equals('Forbidden access');
+                describe('User ip address does not belong neither to subnet nor addressWhitelist', () => {
+
+                    it('rejects user', async () => {
+
+                        stubbedClientAddress = '172.11.4.4';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(401);
+                        expect(res.result.message).equals('Forbidden access');
+                    });
+                });
+
+                describe('User has invalid ip address', () => {
+
+                    it('rejects user', async () => {
+
+                        stubbedClientAddress = '30.3.0.300';
+                        const res = await serverInjectAsync(requestOpts);
+                        expect(res.statusCode).to.equal(401);
+                        expect(res.result.message).equals('Forbidden access');
+                    });
                 });
             });
         });
@@ -309,6 +464,7 @@ describe('Hapi-ip-whitelist filter logic', () => {
                     expect(res.result.success).equals(true);
                 });
             });
+
             describe('User ip address does not belong in required network range', () => {
 
                 it('rejects user', async () => {

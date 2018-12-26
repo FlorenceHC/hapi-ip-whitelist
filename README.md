@@ -4,7 +4,7 @@
 
 This is an authentication scheme plugin for Hapi.js. Strategy defined with this scheme can be used before other strategies or as a standalone strategy. Although it is strongly recommended that this scheme is used only as an addition to other secure authentication mechanisms.
 
-This strategy is applicable to both direct request and proxied request. Although for proxied requests it will only work for level 1 proxying i.e. for the requests that only pass through one proxy until they reach the server (This is a security measure because ip addressed from requests that go through several proxies can be easily spoofed). The client address in proxied requests is read from `x-forwarded-for` header for now only. 
+This strategy is applicable to both direct request and proxied request. Although for proxied requests it will only work for level 1 proxying i.e. for the requests that only pass through one proxy until they reach the server (This is a security measure because ip addresses from requests that go through several proxies can be easily spoofed). The client address in proxied requests is read from `x-forwarded-for` header for now only. 
 
 The name of the registered scheme is `ip-whitelist`.
 

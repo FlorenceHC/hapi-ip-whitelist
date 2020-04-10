@@ -1,6 +1,6 @@
 # Hapi-ip-whitelist
 
-(**Note**: The Hapi-ip-whitelist v2.x is meant for use with Hapi v17. For Hapi v16 use v1.x)
+(**Note**: The Hapi-ip-whitelist is meant for use with Hapi v18+)
 
 This is an authentication scheme plugin for Hapi.js. Strategy defined with this scheme can be used before other strategies or as a standalone strategy. Although it is strongly recommended that this scheme is used only as an addition to other secure authentication mechanisms.
 

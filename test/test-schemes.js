@@ -1,6 +1,6 @@
 'use strict';
 
-const Boom = require('boom');
+const Boom = require('@hapi/boom');
 
 const alwaysPassScheme = (server, options) => ({
     authenticate: async (request, h) => h.authenticated({ credentials: true })

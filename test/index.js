@@ -1,8 +1,8 @@
 'use strict';
 
-const Hapi = require('hapi');
-const Code = require('code');
-const Lab = require('lab');
+const Hapi = require('@hapi/hapi');
+const Code = require('@hapi/code');
+const Lab = require('@hapi/lab');
 
 const HapiIpWhitelist = require('../lib/plugin.js');
 const TestSchemes = require('./test-schemes.js');
